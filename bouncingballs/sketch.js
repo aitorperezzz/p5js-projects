@@ -1,4 +1,4 @@
-var number = 5;
+var number = 3;
 var balls = [number];
 var currentNumber = 0;
 var alfa, theta1, theta2, v1tan, v1perp, v2tan, v2perp, energy;
@@ -45,7 +45,7 @@ function draw() {
 
 class Ball {
 	constructor() {
-		this.rad = random(30, 40);
+		this.rad = random(40, 80);
 		/*
 		the positions and velocities correspond to a cartesian coordinate system
 		where the (0, 0) is the bottom left: a physics coordinate system
@@ -64,7 +64,7 @@ class Ball {
 		this.angle = giveAtan(this.xspeed, this.yspeed);
 		this.energy = (1/2) * this.mass * Math.pow(this.speed, 2);
 
-		// label is one plus the number that have been already created
+		// label is one plus the number of balls that have been already created
 		this.label = currentNumber + 1;
 
 		/*
@@ -110,6 +110,10 @@ class Ball {
 	}
 
 	checkBall(ball) {
+		/*
+		if (this.touching(ball)) {
+			this.collision(ball);
+		} */
 		// satisfy these two conditions to have a collision
 		if (this.sameLabel(ball) && this.bothInside(ball)) {
 			if (!this.touching(ball)) {
@@ -162,6 +166,15 @@ class Ball {
 	}
 
 	collision(ball) {
+		// first separate the two balls
+		this.separate(ball);
+
+		// calculate the straight line that is the trajectory of both balls
+		this.trajectory();
+		ball.trajectory();
+
+
+
 		// this function handles the collision
 		console.log('entering collision now')
 		// first we define the line of colission by getting the angles right
@@ -232,6 +245,14 @@ class Ball {
 		ball.lastWith = this.label;
 		this.hasLeft = false;
 		ball.hasLeft = false;
+	}
+
+	separate(ball) {
+
+	}
+
+	trajectory() {
+
 	}
 
 	changeXspeed() {

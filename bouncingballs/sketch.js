@@ -1,59 +1,87 @@
-var number = 3;
+var number = 4;
 var balls = [number];
 var currentNumber = 0;
+var rad, x, y, data;
 var alfa, theta1, theta2, v1tan, v1perp, v2tan, v2perp, energy;
 var sol1, sol2, v1tanfinal, v2tanfinal, alfa1final, alfa2final, As, Bs, Cs, d;
-var inside;
 
 function setup() {
 	createCanvas(800, 600);
 
-	// Todo: I have to create them so that they don't interfere with
-	// each other! They all should start separated
-
 	// create a certain number of balls
 	for (i = 0; i < number; i++) {
-		balls[i] = new Ball();
+		if (i == 0) {
+			data = givePossibilities();
+			balls[0] = new Ball(data[0], data[1], data[2]);
+		} else {
+			do {
+				data = givePossibilities();
+			} while (overlaps(data) == true);
+			balls[i] = new Ball(data[0], data[1], data[2]);
+		}
+		// update the number of created balls
 		currentNumber = currentNumber + 1;
 	}
+}
+
+function givePossibilities() {
+	rad = random(40, 60);
+	x = random(rad, width - rad);
+	y = random(rad, height - rad);
+	return [rad, x, y];
+}
+
+function overlaps([rad, x, y]) {
+	// loop over the already created balls in balls array and check distance
+	for (i = 0; i < balls.length; i++) {
+		if (Math.sqrt(Math.pow(x - balls[i].x, 2) + Math.pow(y - balls[i].y, 2)) < balls[i].rad + rad) {
+			return true;
+		}
+	}
+	return false;
 }
 
 function draw() {
 	// draw the background each time
 	background(150);
 
-	// draw some balls
+	// draw some balls and check for the edges
 	noStroke();
 
-	// check, for couples that are different, if a collision is needed
-	for (i = 0; i < number; i++) {
-		for (j = i + 1; j < number; j++) {
-			balls[i].checkBall(balls[j]);
-			console.log(balls[i].hasLeft);
-		}
-	}
 	for (i = 0; i < number; i++) {
 		fill(255, 0, 150);
 		balls[i].checkEdge();
 		balls[i].move();
 		balls[i].draw();
 		fill(0);
-		text(balls[i].label, balls[i].x, height - balls[i].y);
-		text(balls[i].lastWith, balls[i].x, height - balls[i].y + 20);
+		text(balls[i].label, balls[i].x, height - balls[i].y + 3);
+	}
+
+	// check, for couples that are different, if a collision is needed
+	for (i = 0; i < number; i++) {
+		for (j = i + 1; j < number; j++) {
+			balls[i].checkBall(balls[j]);
+		}
 	}
 }
 
 class Ball {
-	constructor() {
-		this.rad = random(40, 80);
+	constructor(rad, x, y) {
+		this.rad = rad;
+		this.x = x;
+		this.y = y;
+		this.label = currentNumber + 1;
 		/*
 		the positions and velocities correspond to a cartesian coordinate system
 		where the (0, 0) is the bottom left: a physics coordinate system
 		*/
-		this.x = random(this.rad, width - this.rad);
-		this.y = random(this.rad, height - this.rad);
 		this.xspeed = random(-3, 3);
 		this.yspeed = random(-3, 3);
+
+		// keep track of the last position the ball was at
+		// for now, initialize with the position itself
+		this.lastx = this.x;
+		this.lasty = this.y;
 
 		/*
 		mass is calculated as the radius squared, this is, mass is proportional
@@ -64,15 +92,8 @@ class Ball {
 		this.angle = giveAtan(this.xspeed, this.yspeed);
 		this.energy = (1/2) * this.mass * Math.pow(this.speed, 2);
 
-		// label is one plus the number of balls that have been already created
-		this.label = currentNumber + 1;
-
-		/*
-		keep track of the last ball with which this one collided, and also
-		the time ellapsed since then. Initialize for now
-		*/
 		this.lastWith = 0;
-		this.hasLeft = true;
+		this.timeEllapsed = 0;
 	}
 
 	draw() {
@@ -84,96 +105,71 @@ class Ball {
 	}
 
 	move() {
+		// first update the last position the ball was at
+		this.lastx = this.x;
+		this.lasty = this.y;
+
 		// change values in the cartesian coordinate system
 		this.x = this.x + this.xspeed;
 		this.y = this.y + this.yspeed;
-		/*
-		// update the time since the last collision
-		if (this.lastCollision[1] > 0) {
-			this.lastCollision[1] = this.lastCollision[1] - this.speed;
-		}*/
 
-		// REMOVE
-		// console.log(this.label, this.lastCollision[1]);
+		this.timeEllapsed = this.timeEllapsed + 1;
 	}
 
 	checkEdge() {
 		// if it reaches the right and left edges of the canvas
-		if (this.x < this.rad || this.x > width - this.rad) {
-			this.changeXspeed();
+		if (this.x < this.rad) {
+			this.xspeed = Math.abs(this.xspeed);
+			this.updateAngle();
+		}
+
+		if (this.x > width - this.rad) {
+			this.xspeed = - Math.abs(this.xspeed);
+			this.updateAngle();
 		}
 
 		// if it reaches the upper and lower edges of the canvas
-		if (this.y < this.rad || this.y > height - this.rad) {
-			this.changeYspeed();
+		if (this.y < this.rad) {
+			this.yspeed = Math.abs(this.yspeed);
+			this.updateAngle();
+		}
+
+		if (this.y > height - this.rad) {
+			this.yspeed = - Math.abs(this.yspeed);
+			this.updateAngle();
 		}
 	}
 
 	checkBall(ball) {
-		/*
-		if (this.touching(ball)) {
+		if (this.touching(ball) && this.lastCollision(ball) == false) {
 			this.collision(ball);
-		} */
-		// satisfy these two conditions to have a collision
-		if (this.sameLabel(ball) && this.bothInside(ball)) {
-			if (!this.touching(ball)) {
-				this.hasLeft = true;
-				ball.hasLeft = true;
-			}
-		} else {
-			if (this.touching(ball)) {
-				this.collision(ball);
-			}
 		}
 	}
 
-	sameLabel(ball) {
-		return this.lastWith == ball.label && ball.lastWith == this.label;
-	}
-
-	bothInside(ball) {
-		return this.hasLeft == false && ball.hasLeft == false;
+	touching(ball) {
+		// merely check the distance between the two balls
+		return this.giveDist(ball) < this.rad + ball.rad + 1;
 	}
 
 	giveDist(ball) {
 		return dist(this.x, height - this.y, ball.x, height - ball.y);
 	}
-	touching(ball) {
-		// merely check the distance between the two balls
-		return this.giveDist(ball) < this.rad + ball.rad;
-	}
 
-	hasToCollide(ball) {
-		/* two balls will not have to collide if the last collision has been between
-		them and also the time ellapsed is too short. In any other case, collision
-		should happen. Note that another condition has to be verified; that they
-		are touching each other
-		*/
-
+	lastCollision(ball) {
+		// this function checks if two balls have recently had a collision
 		if (this.lastWith != ball.label || ball.lastWith != this.label) {
-			return true;
-		}
-		// to this point, the balls are sure to have the same label for last collision
-		// so, check if the distance traveled is enough for them to be apart now
-		else if (this.hasLeft == true && ball.hasLeft == true) {
-			return true;
-		}
-		// to this point, the balls have the same label and time ellapsed is too short
-		// so they do not have to collide
-		else {
 			return false;
+		}	else if ( this.timeEllapsed > 20) {
+				return false;
+		} else {
+			return true;
 		}
 	}
 
 	collision(ball) {
-		// first separate the two balls
-		this.separate(ball);
-
-		// calculate the straight line that is the trajectory of both balls
-		this.trajectory();
-		ball.trajectory();
-
-
+		// make the balls return to their last positions (so they are separated)
+		this.goBack();
+		ball.goBack();
 
 		// this function handles the collision
 		console.log('entering collision now')
@@ -240,32 +236,19 @@ class Ball {
 		this.energy = (1/2) * this.mass * Math.pow(this.speed, 2);
 		ball.energy = (1/2) * ball.mass * Math.pow(ball.speed, 2);
 
-		// update the information of the last collision that just happened
 		this.lastWith = ball.label;
 		ball.lastWith = this.label;
-		this.hasLeft = false;
-		ball.hasLeft = false;
+
+		this.timeEllapsed = 0;
+		ball.timeEllapsed = 0;
 	}
 
-	separate(ball) {
-
+	goBack() {
+		this.x = this.lastx;
+		this.y = this.lasty;
 	}
 
-	trajectory() {
-
-	}
-
-	changeXspeed() {
-		/*
-		when changing the speed, the angle of the velocity with the axes
-		might have changed, so update the angle also
-		*/
-		this.xspeed = -this.xspeed;
-		this.angle = giveAtan(this.xspeed, this.yspeed);
-	}
-
-	changeYspeed() {
-		this.yspeed = -this.yspeed;
+	updateAngle() {
 		this.angle = giveAtan(this.xspeed, this.yspeed);
 	}
 }

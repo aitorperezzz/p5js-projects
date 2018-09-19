@@ -1,57 +1,115 @@
 // select the number of elements to use in the visualization
-var number = 50;
+let number = 50;
 
 // create an array with space for 1that number of elements
-var list = [number];
 
-// declare arrays to store the results of computation
-var ordBub = [number];
-var ordIns = [number];
-var ordSel = [number];
-var ordMer = [number];
+
+
+// console.log('element zero of array list when just created', initList[0]);
+
+
+
+// console.log('Initial list: ', initList);
+// ordBub = bubbleSort(ordBub);
+// console.log('element zero of array list after calling bubblesort', initList[0]);
+
+/*
+let x = 10;
+console.log('x is beginning: ', x);
+
+let y = operation(x);
+
+function operation(z) {
+	z = z + 1;
+	return z;
+}
+*/
+let initList = [];
+
+let ordBub = [];
+
+
+// let ordIns = insertionSort(list);
+// let ordSel = selectionSort(list);
+// let ordMer = mergeSort(list);
+// console.log('ordered by Bubble: ', ordBub);
+// console.log('Bubble and Insertion give same results', areEqual(ordBub, ordIns));
+// console.log('Bubble and Selection give same results', areEqual(ordBub, ordSel));
+// console.log('Bubble and Merge give same results', areEqual(ordBub, ordMer));
+
 
 function setup() {
 	createCanvas(800, 600);
+}
 
-	// put random integer numbers inside the array (use random and round)
-	for (i = 0; i < number; i++) {
-		list[i] = Math.round(random(1, 100));
+
+function printList(list) {
+	let n = list.length;
+	for (let i = 0; i < n; i++) {
+		console.log(i, list[i]);
 	}
-
-	console.log('Initial list: ', list);
-	ordBub = bubbleSort(list);
-	ordIns = insertionSort(list);
-	ordSel = selectionSort(list);
-	ordMer = mergeSort(list);
-	console.log('ordered by Bubble: ', ordBub);
-	console.log('Bubble and Insertion give same results', areEqual(ordBub, ordIns));
-	console.log('Bubble and Selection give same results', areEqual(ordBub, ordSel));
-	console.log('Bubble and Merge give same results', areEqual(ordBub, ordMer));
 }
 
+// put random integer numbers inside the array (use random and round)
+for (let i = 0; i < number; i++) {
+	initList[i] = Math.round(Math.random() * 100);
+	console.log(i, initList[i]);
+}
+console.log('imprimo initList antes de llamar a bubblesort');
+printList(initList);
+ordBub = initList.slice();
+
+console.log('imprimo ordBub antes de llamar a bubblesort');
+printList(ordBub);
+
+// console.log('initial list in setup before bubblesort: ', initList);
+ordBub = bubbleSort(ordBub);
+console.log('imprimo initList despues de llamar a bubblesort');
+printList(initList);
+console.log('imprimo ordBub despues de llamar a bubblesort');
+printList(ordBub);
+
+
+// console.log('initial list seen from the outside: ', list);
 function draw() {
-	// visualization still not implemented
+	// draw the background
+	background(150);
+	// first build visualization of buuble sort
+	fill(255, 0, 0);
+	noStroke();
+	for (let i = 0; i < number; i++) {
+		rect(10 + i*15, height - 320 - 2*initList[i], 10, 2*initList[i]);
+		rect(10 + i*15, height - 20 - 2*ordBub[i], 10, 2*ordBub[i]);
+	}
 }
 
+
+
+
+
+
+/*
 function areEqual(list1, list2) {
 	// receives two lists and checks if they are equal element to element
 	// assumes the length of both are the same
-	var n = list1.length;
-	for (i = 0; i < n; i++) {
+	let n = list1.length;
+	for (let i = 0; i < n; i++) {
 		if (list1[i] != list2[i]) {
 			return false;
 		}
 	}
 	return true;
 }
+*/
 
 function bubbleSort(list) {
+	console.log('initial list inside bubble in beginning: ', list);
 	// implements bubble sort algorithm
-	var n = list.length;
-	var carrier;
+	let n = list.length;
+	let carrier;
 
-	for (i = n - 2; i > 0; i--) {
-		for (j = 0; j < i + 1; j++) {
+	for (let i = n - 2; i > 0; i--) {
+		for (let j = 0; j < i + 1; j++) {
 			// compare the jth and the (j+1)th element and swap them if needed
 			if (list[j] > list[j + 1]) {
 				// swap them
@@ -59,11 +117,25 @@ function bubbleSort(list) {
 				list[j] = list[j + 1];
 				list[j + 1] = carrier;
 			}
+			// show(list);
 		}
 	}
+	console.log('final result: ', list);
 	return list;
 }
 
+/*
+function show(list) {
+	let n = list.length;
+
+	for (let i = 0; i < n; i++) {
+		rect(10 + i*15, height - 20 - 2*ordBub[i], 10, 2*ordBub[i]);
+	}
+
+}
+*/
+
+/*
 function insertionSort(list) {
 	// implements insertion sort algorithm
 	var n = list.length;
@@ -172,7 +244,7 @@ function merge(list1, list2) {
 	}
 	// this is the last position of newList that was written
 	var leftAt = pointer1 + pointer2;
-	
+
 	if (pointer1 == n) {
 		// append the second array as is to what we already have
 		for (j = pointer2; j < m; j++) {
@@ -187,3 +259,4 @@ function merge(list1, list2) {
 	}
 	return newList;
 }
+*/

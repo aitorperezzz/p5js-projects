@@ -2,40 +2,41 @@ let cube;
 let myCam;
 
 let step = 5;
+let circleRad = 50;
 
 function setup() {
 	createCanvas(800, 600);
 
 	cube = new Cube(0, 0, 0, 30);
 	myCam = new Camera(100, 0, 0, [-1, 0, 0], 30);
+	circle = new CentralCircle(circleRad);
 }
 
 function draw() {
 	background(150);
 
 	cube.draw(myCam);
+	circle.draw();
 }
 
 function keyPressed() {
-	if (keyCode === RIGHT_ARROW) {
-		myCam.moveRight();
+	if (key === 'W') {
+		myCam.moveIn();
 	}
-	if (keyCode === LEFT_ARROW) {
+	if (key === 'S') {
+		myCam.moveOut();
+	}
+	if (key === 'A') {
 		myCam.moveLeft();
 	}
-	if (keyCode === UP_ARROW) {
-		myCam.moveUp();
-	}
-	if (keyCode === DOWN_ARROW) {
-		myCam.moveDown();
+	if (key === 'D') {
+		myCam.moveRight();
 	}
 }
 
-/*
 function mousePressed() {
 	myCam.updateDirection(mouseX, mouseY);
 }
-*/
 
 class Point2D {
 	// A 2D point is a point that belongs in a plane (normally the
@@ -125,12 +126,6 @@ class Cube {
 		for (let j = 0; j < 4; j++) {
 			// Draw the points as ellipses
 			for (let i = 0; i < 2; i++) {
-				// No need to draw the points now
-				/*
-				noStroke();
-				fill(0);
-				ellipse(canvasPos[i][j][0], canvasPos[i][j][1], 5, 5); */
-
 				// Draw the lines on the floor and on the roof
 				stroke(0);
 				strokeWeight(4);
@@ -168,36 +163,42 @@ class Camera {
 		this.y = y;
 		this.z = z;
 		this.position = [this.x, this.y, this.z];
-		this.xaxis = [0, 1, 0];
-		this.dir = direction;
-		this.zaxis = [1, 0, 0];
+
+		this.dir = vectorNormalize(direction);
+		this.zaxis = vectorScalar(-1, this.dir);
+		this.xaxis = this.computeXaxis();
 		this.yaxis = vectorProduct(this.zaxis, this.xaxis);
+		this.matrix = matrixBasis(this.xaxis, this.yaxis, this.zaxis);
+
 		this.d = distance;
 		this.xlimit = this.d;
 		this.ylimit = height * this.d / width;
 	}
 
-	updatePosition() {
-		this.position = [this.x, this.y, this.z];
+	updateDirection(mx, my) {
+		// Receives a point in the canvas (the position of the mouse) and computes
+		// the new direction wanted by the user if a new one is wanted
+		if (circle.mouseOutside(mx, my)) {
+			let point = this.canvasPositionInverse(mx, my);
+			let inPlane = [point.x, point.y, -this.d];
+			let vector = matrixProduct(this.matrix, vectorCol(inPlane));
+			this.dir = vectorNormalize(vector);
+			this.afterDirectionUpdate();
+		}
 	}
 
-	updateDirection(mx, my) {
-		let point = this.canvasPositionInverse(mx, my);
-
-		let inPlane = [point.x, point.y, -this.d];
-		let Mmatrix = matrixBasis(this.xaxis, this.yaxis, this.zaxis);
-		let result = matrixProduct(Mmatrix, vectorCol(inPlane));
-		this.dir = vectorNormalize(result);
+	afterDirectionUpdate() {
 		this.updateAxes();
 	}
 
 	updateAxes() {
 		this.zaxis = vectorScalar(-1, this.dir);
-		this.giveXaxis();
+		this.xaxis = this.computeXaxis();
 		this.yaxis = vectorProduct(this.zaxis, this.xaxis);
+		this.updateMatrix();
 	}
 
-	giveXaxis() {
+	computeXaxis() {
 		// Given the current direction, give an x axis which is parallel to the ground
 		let vector = [];
 		vector[0] = this.dir[1];
@@ -206,11 +207,14 @@ class Camera {
 		return vectorNormalize(vector);
 	}
 
-	/*
-	computeYAxis() {
-		// gives the axes of the camera in the cartesian coordinate system
-		this.yaxis = matrixProduct(this.z, this.x);
-	} */
+	updateMatrix() {
+		this.matrix = matrixBasis(this.xaxis, this.yaxis, this.zaxis);
+	}
+
+	// TODO: simplify this part: there should be a complete function that receives
+	// a 3D point and returns a canvas point. This is the function that should be
+	// called by the cube
+	// Rewrite the next two functions
 
 	giveProjection(point) {
 		// Receives a 3D point and gives the corresponding 2D point,
@@ -226,69 +230,64 @@ class Camera {
 		return projPoint;
 	}
 
-	/*
-	reverseProjection(point) {
-		// Receives a 2D point in the plane of vision and returns the 3D point
-		// that belongs inside the plane of vision
-		let inPlane = point.position.push(-this.d);
-		let vector = vectorSum(this.position, inPlane);
-		let Mmatrix = matrixBasis(this.xaxis, this.yaxis, this.zaxis);
-		let result = matrixProduct(Mmatrix, vectorCol(vector));
-		this.dir = result;
-	}
-
-	/*
-	canvasLimits() {
-		// Updates the canvas limits
-		this.xlimit = this.d;
-		this.ylimit = height * this.d / width;
-	} */
-
 	canvasPosition(point) {
-		// Receives a 2D point and gives the coordinates for use in p5js
+		// Receives a 2D point and gives the coordinates for use in the p5js canvas
 		let x = map(point.x, -this.xlimit, this.xlimit, 0, width);
 		let y = map(point.y, -this.ylimit, this.ylimit, height, 0);
 		return [x, y];
 	}
 
 	canvasPositionInverse(mx, my) {
-		// Receives an x and a y in the canvas and returns x and y coordinates
-		// in the plane of view (returns a type Point2D)
+		// Receives an x and a y in the canvas (normally the mouse position)
+		// and returns a type 2D point in the plane of view
 		let x = map(mx, 0, width, -this.xlimit, this.xlimit);
 		let y = map(my, 0, height, this.ylimit, -this.ylimit);
 		let newPoint = new Point2D(x, y);
 		return newPoint;
 	}
 
-	/*
-	fieldOfView(point2D) {
-		// Receives a 2D point in the plane of view and decides if it is inside
-
-
-
-		// Gives the x and y limits in the field of view of the camera,
-		// this takes into account the distance of the camera to the plane
-		this.xlimit = 2 * this.d;
-		this.ylimit = heigth * 2 * this.d / width;
-	} */
-
 	moveRight() {
-		this.y = this.y + step;
-		this.updatePosition();
+		this.updatePosition(vectorScalar(step, this.xaxis));
 	}
 
 	moveLeft() {
-		this.y = this.y - step;
-		this.updatePosition();
+		this.updatePosition(vectorScalar(-step, this.xaxis));
 	}
 
-	moveUp() {
-		this.z = this.z + step;
-		this.updatePosition();
+	moveIn() {
+		this.updatePosition(vectorScalar(-step, this.zaxis));
 	}
 
-	moveDown() {
-		this.z = this.z - step;
-		this.updatePosition();
+	moveOut() {
+		this.updatePosition(vectorScalar(step, this.zaxis));
+	}
+
+	updatePosition(vector) {
+		// Receives a displacement vector and updates the position of the camera
+		this.position = vectorSum(this.position, vector);
+		this.x = this.position[0];
+		this.y = this.position[1];
+		this.z = this.position[2];
+	}
+}
+
+class CentralCircle {
+	// This is the circle such that if the mouse is inside it, the direction
+	// won't change, but if it is outside, it will change accordingly
+	constructor(rad) {
+		this.rad = rad;
+	}
+
+	mouseOutside(mx, my) {
+		// Receives the position of the mouse and decides if it is inside
+		// the circle or not
+		return (dist(mx, my, width / 2, height / 2) > this.rad);
+	}
+
+	draw() {
+		// Draw the circle, with some transparency
+		noStroke();
+		fill(199, 230, 70, 100);
+		ellipse(width / 2, height / 2, this.rad, this.rad);
 	}
 }

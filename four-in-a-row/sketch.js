@@ -43,16 +43,23 @@ function mousePressed() {
 				let piece = new Piece(users[current], i);
 				grid.insert(piece, i);
 
-				// Check if the newly inserted piece gives a win
-				let win = grid.pieces[grid.pieces.length - 1].checkWin();
+				// Check if any of the pieces results in a win now that a piece
+				// has been inserted 
+				let win = false;
+				for (let i = 0; i < grid.pieces.length; i++) {
+					if (grid.pieces[i].checkWin()) {
+						win = true;
+					}
+				}
 				if (win) {
+					// Modify the message board and noLoop().
 					let message = 'USER '.concat(String(current + 1), ' IS THE WINNER');
 					board.change(message);
 					noLoop();
 				}
 				else {
-					// Update the user only if a piece has been inserted and there
-					// is no winner.
+					// If no one is winning and a piece has been inserted, only in this
+					// case update the user.
 					if (current == 0) {
 						current = 1;
 						board.change('User 2 has to move');

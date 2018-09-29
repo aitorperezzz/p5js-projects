@@ -1,4 +1,4 @@
-let users = [];
+let players = [];
 let current;
 let grid;
 let board;
@@ -12,12 +12,12 @@ let button;
 function setup() {
 	createCanvas(800, 800);
 
-	// Create the two users
+	// Create the two players
 	for (let i = 0; i < 2; i++) {
-		let newUser = new User(i);
-		users.push(newUser);
+		let newPlayer = new Player(i);
+		players.push(newPlayer);
 	}
-	// Initialize the index of the user that has to play next (the first one)
+	// Initialize the index of the player that has to play next (the first one)
 	current = 0;
 
 	// Create the grid
@@ -51,7 +51,7 @@ function mousePressed() {
 				// available there.
 				if (grid.available(i)) {
 					// Only in this case, create the piece and insert it.
-					let piece = new Piece(users[current], i);
+					let piece = new Piece(players[current], i);
 					grid.insert(piece, i);
 
 					// Check if any of the pieces results in a win now that a piece
@@ -69,15 +69,15 @@ function mousePressed() {
 						// case update the user.
 						if (current == 0) {
 							current = 1;
-							board.change('User 2 has to move');
+							board.change('Player 2 has to move');
 						}
 						else if (current == 1) {
 							current = 0;
-							board.change('User 1 has to move');
+							board.change('Player 1 has to move');
 						}
 					}
 					else {
-						let message = 'USER '.concat(String(current + 1), ' IS THE WINNER');
+						let message = 'PLAYER '.concat(String(current + 1), ' IS THE WINNER');
 						board.change(message);
 					}
 				}
@@ -91,9 +91,9 @@ function mousePressed() {
 	}
 }
 
-class User {
+class Player {
 	constructor(i) {
-		// Create a user associated with this label
+		// Create a player associated with this label
 		this.name = i;
 		if (i == 0) {
 			this.label = 'red';
@@ -151,15 +151,6 @@ class Grid {
 		}
 	}
 
-	/*
-	finishDrawing(piece) {
-		// When the last piece is inputed which makes the player win, finish
-		// drawing it before exiting the program
-		while (piece.moving) {
-			piece.move();
-		}
-	} */
-
 	clicked(mx, my, i) {
 		// Returns true if the column i has been clicked
 		return 100 + i * this.size < mx && mx < 100 + (i + 1) * this.size;
@@ -185,9 +176,9 @@ class Grid {
 }
 
 class Piece {
-	constructor(user, col) {
-		// Receive a user and a column number
-		this.label = user.label;
+	constructor(player, col) {
+		// Receive a player and a column number
+		this.label = player.label;
 		this.col = col;
 		this.size = (width - 200) / numberCols * (2/3);
 		this.colsize = (width - 200) / numberCols;
@@ -224,8 +215,6 @@ class Piece {
 		else if (this.label == 'yellow') {
 			fill(255, 211, 0);
 		}
-		// let x = 100 + (this.colsize / 2) + this.colsize * this.col;
-		// let y = height - 50 - this.colsize / 2 - this.colsize * this.row;
 		ellipse(this.x, this.y, this.size, this.size);
 	}
 
@@ -251,7 +240,6 @@ class Piece {
 		else {
 			for (let i = 0; i < paths.length; i++) {
 				if (paths[i]) {
-					console.log('WE HAVE A WINNER!!!');
 					return true;
 				}
 			}
@@ -295,7 +283,7 @@ class MessageBoard {
 	constructor() {
 		this.x = 100;
 		this.y = 100;
-		this.message = 'User 1 has to move';
+		this.message = 'Player 1 has to move';
 	}
 
 	displayMessage() {
@@ -305,23 +293,21 @@ class MessageBoard {
 		textSize(20);
 		text(this.message, this.x, this.y);
 
-		// Also displays the colors of the users.
-		for (let i = 0; i < users.length; i++) {
+		// Also displays the colors of the players.
+		for (let i = 0; i < players.length; i++) {
 			noStroke();
 			fill(0);
-			text('User '. concat(String(i + 1)), 400 + i * 100, 50);
+			text('Player '. concat(String(i + 1)), 400 + i * 100, 50);
 			stroke(0);
 			strokeWeight(3);
-			if (users[i].label == 'yellow') {
+			if (players[i].label == 'yellow') {
 				fill(255, 211, 0);
 			}
-			else if (users[i].label == 'red') {
+			else if (players[i].label == 'red') {
 				fill(255, 0, 0);
 			}
 			rect(400 + i * 100, 60, 60, 60);
 		}
-
-		// Now draw a new game button
 	}
 
 	change(string) {
@@ -351,7 +337,7 @@ class Button {
 	}
 
 	pressed(mx, my) {
-		// Check if the cutton has been pressed, according to its dimensions
+		// Check if the button has been pressed, according to its dimensions
 		let horizontal =  this.x < mx && mx < this.x + this.xsize;
 		let vertical = this.y < my && my < this.y + this.ysize;
 		return horizontal && vertical;

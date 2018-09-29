@@ -4,6 +4,10 @@ let grid;
 let board;
 let numberCols = 7;
 let numberRows = 6;
+let speed = 20;
+let win = false;
+let listen = true;
+let button;
 
 function setup() {
 	createCanvas(800, 800);
@@ -21,6 +25,9 @@ function setup() {
 
 	// Create the message board
 	board = new MessageBoard();
+
+	// Create the new game button
+	button = new Button();
 }
 
 function draw() {
@@ -31,46 +38,56 @@ function draw() {
 
 	// Draw the grid
 	grid.draw();
+
+	// Draw the new game button
+	button.draw();
 }
 
 function mousePressed() {
-	for (let i = 0; i < numberCols; i++) {
-		if (grid.clicked(mouseX, mouseY, i)) {
-			// The i-th column has been clicked, so check if there is space
-			// available there.
-			if (grid.available(i)) {
-				// Only in this case, create the piece and insert it.
-				let piece = new Piece(users[current], i);
-				grid.insert(piece, i);
+	if (listen) {
+		for (let i = 0; i < numberCols; i++) {
+			if (grid.clicked(mouseX, mouseY, i)) {
+				// The i-th column has been clicked, so check if there is space
+				// available there.
+				if (grid.available(i)) {
+					// Only in this case, create the piece and insert it.
+					let piece = new Piece(users[current], i);
+					grid.insert(piece, i);
 
-				// Check if any of the pieces results in a win now that a piece
-				// has been inserted 
-				let win = false;
-				for (let i = 0; i < grid.pieces.length; i++) {
-					if (grid.pieces[i].checkWin()) {
-						win = true;
+					// Check if any of the pieces results in a win now that a piece
+					// has been inserted
+					let win = false;
+					for (let i = 0; i < grid.pieces.length; i++) {
+						if (grid.pieces[i].checkWin()) {
+							win = true;
+							listen = false;
+						}
 					}
-				}
-				if (win) {
-					// Modify the message board and noLoop().
-					let message = 'USER '.concat(String(current + 1), ' IS THE WINNER');
-					board.change(message);
-					noLoop();
-				}
-				else {
-					// If no one is winning and a piece has been inserted, only in this
-					// case update the user.
-					if (current == 0) {
-						current = 1;
-						board.change('User 2 has to move');
+					if (win == false) {
+						// A piece has been inserted and no onw wins, so update the user
+						// If no one is winning and a piece has been inserted, only in this
+						// case update the user.
+						if (current == 0) {
+							current = 1;
+							board.change('User 2 has to move');
+						}
+						else if (current == 1) {
+							current = 0;
+							board.change('User 1 has to move');
+						}
 					}
-					else if (current == 1) {
-						current = 0;
-						board.change('User 1 has to move');
+					else {
+						let message = 'USER '.concat(String(current + 1), ' IS THE WINNER');
+						board.change(message);
 					}
 				}
 			}
 		}
+	}
+
+	// Now the new game button can always be pressed
+	if (button.pressed(mouseX, mouseY)) {
+		button.initialize();
 	}
 }
 
@@ -126,11 +143,22 @@ class Grid {
 			line(left, height - 50, left + this.size, height - 50);
 		}
 
+		// Update the moving pieces' location and move them
 		// Now draw all the existing pieces
 		for (let i = 0; i < this.pieces.length; i++) {
+			this.pieces[i].move();
 			this.pieces[i].draw();
 		}
 	}
+
+	/*
+	finishDrawing(piece) {
+		// When the last piece is inputed which makes the player win, finish
+		// drawing it before exiting the program
+		while (piece.moving) {
+			piece.move();
+		}
+	} */
 
 	clicked(mx, my, i) {
 		// Returns true if the column i has been clicked
@@ -164,6 +192,26 @@ class Piece {
 		this.size = (width - 200) / numberCols * (2/3);
 		this.colsize = (width - 200) / numberCols;
 		this.row = grid.next[col];
+
+		// Variables for visualization
+		this.x = 100 + (this.colsize / 2) + this.colsize * this.col;
+		this.beginy = height - 50 - this.colsize * numberRows;
+		// Initialize the position of the piece to the beginning.
+		this.y = this.beginy;
+		this.finaly = height - 50 - this.colsize / 2 - this.colsize * this.row;
+		this.moving = true;
+	}
+
+	move() {
+		// Update the position
+		if (this.moving) {
+			this.y = this.y + speed;
+			if (this.y > this.finaly) {
+				// Place the piece in its final location and tell it not to move.
+				this.y = this.finaly;
+				this.moving = false;
+			}
+		}
 	}
 
 	draw() {
@@ -176,9 +224,9 @@ class Piece {
 		else if (this.label == 'yellow') {
 			fill(255, 211, 0);
 		}
-		let x = 100 + (this.colsize / 2) + this.colsize * this.col;
-		let y = height - 50 - this.colsize / 2 - this.colsize * this.row;
-		ellipse(x, y, this.size, this.size);
+		// let x = 100 + (this.colsize / 2) + this.colsize * this.col;
+		// let y = height - 50 - this.colsize / 2 - this.colsize * this.row;
+		ellipse(this.x, this.y, this.size, this.size);
 	}
 
 	checkWin() {
@@ -272,10 +320,47 @@ class MessageBoard {
 			}
 			rect(400 + i * 100, 60, 60, 60);
 		}
+
+		// Now draw a new game button
 	}
 
 	change(string) {
 		// Receives a string and updates the message
 		this.message = string;
+	}
+}
+
+class Button {
+	// This is the new game button
+	constructor() {
+		this.x = 600;
+		this.y = 60;
+		this.xsize = 150;
+		this.ysize = 60;
+		this.text = 'New game';
+	}
+
+	draw() {
+		// Draws the button
+		stroke(0);
+		fill(255);
+		rect(this.x, this.y, this.xsize, this.ysize);
+		noStroke();
+		fill(0);
+		text(this.text, this.x + 20, this.y + 35);
+	}
+
+	pressed(mx, my) {
+		// Check if the cutton has been pressed, according to its dimensions
+		let horizontal =  this.x < mx && mx < this.x + this.xsize;
+		let vertical = this.y < my && my < this.y + this.ysize;
+		return horizontal && vertical;
+	}
+
+	initialize() {
+		current = 0;
+		grid = new Grid(numberCols, numberRows);
+		board = new MessageBoard();
+		listen = true;
 	}
 }

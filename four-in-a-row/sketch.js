@@ -180,7 +180,7 @@ class Piece {
 		// Receive a player and a column number
 		this.label = player.label;
 		this.col = col;
-		this.size = (width - 200) / numberCols * (2/3);
+		this.size = (width - 200) / numberCols * (4/5);
 		this.colsize = (width - 200) / numberCols;
 		this.row = grid.next[col];
 

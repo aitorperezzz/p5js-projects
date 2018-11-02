@@ -50,9 +50,42 @@ class Square {
 			}
 			else if (this.number != 0) {
 				// Draw the number
+        if (this.number == 1) {
+          // Light blue
+          fill(123, 104, 238);
+        }
+        else if (this.number == 2) {
+          // Green
+          fill(50, 205, 50);
+        }
+        else if (this.number == 3) {
+          // Red
+          fill(255, 0, 0);
+        }
+        else if (this.number == 4) {
+          // Dark blue
+          fill(0, 0, 139);
+        }
+        else if (this.number == 5) {
+          // Dark red
+          fill(139, 0, 0);
+        }
+        else if (this.number == 6) {
+          // Sea green
+          fill(32, 178, 170);
+        }
+        else if (this.number == 7) {
+          // Black
+          fill(0);
+        }
+        else if (this.number == 8) {
+          // Grey
+          fill(100);
+        }
 				noStroke();
-				fill(0);
 				textAlign(CENTER);
+        textSize(18);
+        textStyle(BOLD);
 				text(this.number, this.x + this.size / 2, this.y + this.size * (2/3));
 			}
 		}
@@ -65,7 +98,7 @@ class Square {
 		return xClicked && yClicked;
 	}
 
-	whenClicked(mouseButton) {
+	clicked(mouseButton) {
 		// The square has been clicked, so do something
 		if (this.mine) {
 			// End the game

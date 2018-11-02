@@ -21,20 +21,18 @@ function draw() {
 
 	master.checkWin();
 	board.display();
-	arena.draw();
+	arena.display();
 }
 
-
 function mousePressed() {
-	// If it hits the arena
 	if (arena.isClicked(mouseX, mouseY)) {
-		// If it hit the arena, decide which square and call
+		// If it hits the arena, decide which square and call
 		let square = arena.squareClicked(mouseX, mouseY);
-		square.whenClicked();
+		square.clicked();
 	}
 
-	// If it hits the board
 	else if (board.isClicked(mouseX, mouseY)) {
+		// If it hits the board, decide which button and call
 		let button = board.buttonClicked(mouseX, mouseY);
 		button.clicked();
 	}
@@ -57,9 +55,6 @@ function keyPressed() {
 
 class Master {
 	// This class is the controller of everything that happens in the game
-	constructor() {
-		this.playing = true;
-	}
 
 	checkWin() {
 		// Checks if the user has won
@@ -70,10 +65,10 @@ class Master {
 
 	endGame(type) {
 		if (type == 'win') {
-			//arena.reveal();
 			board.buttons[5].changeText('Player has won');
 		}
 		else if (type == 'lose') {
+			// Reveal the arena completely
 			arena.reveal();
 			board.buttons[5].changeText('Player has lost');
 		}
@@ -183,7 +178,7 @@ class Button {
 		else if (this.color == 'red') {
 			fill(255, 0, 0);
 		}
-		strokeWeight(2);
+		strokeWeight(1);
 		stroke(0);
 		rect(this.x, this.y, this.xsize, this.ysize);
 
@@ -243,7 +238,7 @@ class Board {
 	}
 
 	display() {
-		// Display all the message board
+		// Display all the buttons in the message board
 		for (let i = 0, n = this.buttons.length; i < n; i++) {
 			this.buttons[i].draw();
 		}

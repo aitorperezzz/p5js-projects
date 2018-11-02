@@ -83,7 +83,7 @@ class Arena {
 	}
 
 
-	draw() {
+	display() {
 		// Call the draw function for each square
 		for (let i = 0; i < this.xnum; i++) {
 			for (let j = 0; j < this.ynum; j++) {

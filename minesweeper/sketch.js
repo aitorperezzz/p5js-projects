@@ -1,31 +1,43 @@
-let arena;
-let mode;
+// Declare the global variables, accesible by all classes and functions
 let master;
+let mode = 'mode1';
+let types = ['new', 'mines', 'mode1', 'mode2', 'mode3', 'message'];
+let board;
+let arena;
 
+
+// p5js specific functions
 function setup() {
 	createCanvas(1000, 800);
 
-	// Create a space in the canvas for the actual grid of squares
-	mode = 'Expert';
+	// Initialize the global variables
 	master = new Master();
+	board = new Board(types);
 	arena = new Arena(mode);
 }
 
 function draw() {
 	background(225);
 
+	master.checkWin();
+	board.display();
 	arena.draw();
 }
 
 
 function mousePressed() {
-	// Check if it has hit the arena
+	// If it hits the arena
 	if (arena.isClicked(mouseX, mouseY)) {
+		// If it hit the arena, decide which square and call
 		let square = arena.squareClicked(mouseX, mouseY);
 		square.whenClicked();
 	}
 
-	// If it is not the arena, check the rest of the buttons
+	// If it hits the board
+	else if (board.isClicked(mouseX, mouseY)) {
+		let button = board.buttonClicked(mouseX, mouseY);
+		button.clicked();
+	}
 }
 
 function keyPressed() {
@@ -49,238 +61,207 @@ class Master {
 		this.playing = true;
 	}
 
-	endGame() {
-		// Reveal everything in the arena
-		arena.reveal();
+	checkWin() {
+		// Checks if the user has won
+		if (arena.revealedNum == arena.notMines) {
+			this.endGame('win');
+		}
+	}
+
+	endGame(type) {
+		if (type == 'win') {
+			//arena.reveal();
+			board.buttons[5].changeText('Player has won');
+		}
+		else if (type == 'lose') {
+			arena.reveal();
+			board.buttons[5].changeText('Player has lost');
+		}
+	}
+
+	changeMode(string) {
+		// Receives a string and changes the mode of game
+		mode = string;
+		if (mode == 'mode1') {
+			board.buttons[0].changeColor('green');
+			board.buttons[1].changeText('10 mines');
+		}
+		else if (mode == 'mode2') {
+			board.buttons[0].changeColor('yellow');
+			board.buttons[1].changeText('40 mines');
+		}
+		else if (mode == 'mode3') {
+			board.buttons[0].changeColor('red');
+			board.buttons[1].changeText('99 mines');
+		}
+	}
+
+	restart() {
+		arena = new Arena(mode);
+		board.buttons[5].changeText('Playing');
 	}
 }
 
-class Arena {
-	// This class receives a mode and creates some space for the
-	// squares inside the canvas
-	constructor(mode) {
-		this.size = 30;
-		if (mode == 'Beginner') {
-			this.xnum = 9;
-			this.ynum = 9;
-			this.numMines = 10;
+class Button {
+	// Receives a type and creates a button of that type in the appropriate location
+	constructor(type) {
+		this.type = type;
+		if (this.type == 'new') {
+			// The new game button
+			this.x = 0;
+			this.y = 0;
+			this.xsize = (1 / 3) * width;
+			this.ysize = 50;
+			this.text = 'New game';
+			this.color = 'green';
 		}
-		else if (mode == 'Intermediate') {
-			this.xnum = 16;
-			this.ynum = 16;
-			this.numMines = 40;
-		}
-		else if (mode == 'Expert') {
-			this.xnum = 30;
-			this.ynum = 16;
-			this.numMines = 99;
-		}
-
-		//this.numSquares = this.xnum * this.ynum;
-		this.x = (width - this.xnum * this.size) / 2;
-		this.y = 100 + (height - 100 - this.ynum * this.size) / 2;
-
-		// Create a grid with the appropriate number of squares
-		this.squares = [];
-		for (let i = 0; i < this.xnum; i++) {
-			this.squares.push([])
-			for (let j = 0; j < this.ynum; j++) {
-				let square = new Square(this.x + i * this.size, this.y + j * this.size, this.size, i, j);
-				this.squares[i].push(square);
+		else if (this.type == 'mines') {
+			// The indicator of the number of mines in the arena
+			this.x = 0;
+			this.y = 50;
+			this.xsize = (1 / 3) * width;
+			this.ysize = 50;
+			if (mode == 'mode1') {
+				this.text = '10 mines';
 			}
-		}
-
-		// Populate some of the squares with the appropriate number of mines
-		let minesPlaced = 0;
-		while (minesPlaced < this.numMines) {
-			let iCandidate = int(random(0, this.xnum));
-			let jCandidate = int(random(0, this.ynum));
-			if (this.squares[iCandidate][jCandidate].mine == false) {
-				// Make this square a mine and update the number of mines placed
-				this.squares[iCandidate][jCandidate].mine = true;
-				minesPlaced++;
+			else if (mode == 'mode2') {
+				this.text = '40 mines';
 			}
-		}
-
-		// Calculate the number of surrounding mines
-		for (let i = 0; i < this.xnum; i++) {
-			for (let j = 0; j < this.ynum; j++) {
-				this.assignNumber(this.squares[i][j]);
+			else if (mode == 'mode3') {
+				this.text = '99 mines';
 			}
+			this.color = 'white';
 		}
-	}
 
-	assignNumber(square) {
-		// Receives a square and assigns the number of mines
-		// surrounding it
-		if (square.mine == false) {
-			// In this case we have to assign a number
-			for (let i = -1; i < 2; i++) {
-				for (let j = -1; j < 2; j++) {
-					let xIndex = square.i + i;
-					let yIndex = square.j + j;
-
-					let accesible = xIndex >= 0 && xIndex < this.xnum && yIndex >= 0 && yIndex < this.ynum;
-					let notSame = xIndex != square.i || yIndex != square.j;
-
-					if (accesible && notSame) {
-						// The square is accesible and different from the one being analysed, so
-						// check if it has a mine and update number
-						if (this.squares[xIndex][yIndex].mine) {
-							square.number++;
-						}
-					}
-				}
-			}
+		// The difficulty selectors
+		else if (this.type == 'mode1') {
+			this.x = (1 / 3) * width;
+			this.y = 0;
+			this.xsize = (2 / 9) * width;
+			this.ysize = 50;
+			this.text = 'Beginner';
+			this.color = 'green';
 		}
-	}
-
-
-	draw() {
-		// Draw the squares
-		for (let i = 0; i < this.xnum; i++) {
-			for (let j = 0; j < this.ynum; j++) {
-				this.squares[i][j].draw();
-			}
+		else if (this.type == 'mode2') {
+			this.x = (1 / 3) * width + (2 / 9) * width;
+			this.y = 0;
+			this.xsize = (2 / 9) * width;
+			this.ysize = 50;
+			this.text = 'Intermediate';
+			this.color = 'yellow';
 		}
-	}
-
-	isClicked(mx, my) {
-		// Receives the mouse location and decides if the arena has been clicked
-		let xClicked = (this.x < mx && mx < this.x + this.xnum * this.size);
-		let yClicked = (this.y < my && my < this.y + this.ynum * this.size);
-		return xClicked && yClicked;
-	}
-
-	squareClicked(mx, my) {
-		// receives mouse location and returns the square that has been clicked
-		for (let i = 0; i < this.xnum; i++) {
-			for (let j = 0; j < this.ynum; j++) {
-				if (this.squares[i][j].isClicked(mx, my)) {
-					return this.squares[i][j];
-				}
-			}
+		else if (this.type == 'mode3') {
+			this.x = (1 / 3) * width + (4 / 9) * width;
+			this.y = 0;
+			this.xsize = (2 / 9) * width;
+			this.ysize = 50;
+			this.text = 'Expert';
+			this.color = 'red';
 		}
-	}
 
-	reveal() {
-		// Reveal every square
-		for (let i = 0; i < this.xnum; i++) {
-			for (let j = 0; j < this.ynum; j++) {
-				this.squares[i][j].revealed = true;
-			}
+		else if (this.type == 'message') {
+			this.x = (1 / 3) * width;
+			this.y = 50;
+			this.xsize = (2 / 3) * width;
+			this.ysize = 50;
+			this.text = 'Playing';
+			this.color = 'white';
 		}
-	}
-
-	flood(square) {
-		// Flood the surroundings of the given square, which we know does not
-		// have neighbors
-		square.revealed = true;
-
-		for (let i = -1; i < 2; i++) {
-			for (let j = -1; j < 2; j++) {
-				let xIndex = square.i + i;
-				let yIndex = square.j + j;
-				let accesible = xIndex >= 0 && xIndex < this.xnum && yIndex >= 0 && yIndex < this.ynum;
-				let notSame = xIndex != square.i || yIndex != square.j;
-
-				if (accesible && notSame) {
-					// This one is accesible and does not have a mine, so call flood
-					let neighbor = this.squares[xIndex][yIndex];
-					if (neighbor.number == 0 && !neighbor.revealed) {
-						this.flood(neighbor);
-					}
-					neighbor.revealed = true;
-				}
-
-			}
-		}
-	}
-}
-
-class Square {
-	constructor(xpos, ypos, size, i, j) {
-		// Variables that store location information
-		this.x = xpos;
-		this.y = ypos;
-		this.size = size;
-		this.i = i;
-		this.j = j;
-
-		// Number of mines surrounding the square, to be updated
-		// after construction
-		this.number = 0;
-
-		// Initialize variables that store game information
-		this.revealed = false;
-		this.mine = false;
-		this.flag = false;
 	}
 
 	draw() {
-		// The background color of a square is darker if it has not been
-		// revealed
-		stroke(100);
-		strokeWeight(2);
-		if (this.revealed) {
-			fill(190);
+		// Display the background color of the button
+		if (this.color == 'white') {
+			fill(255);
 		}
-		else {
-			fill(150);
+		else if (this.color == 'green') {
+			fill(0, 255, 0);
 		}
-		rect(this.x, this.y, this.size, this.size);
-
-		// Draw flags if necessary
-		if (this.flag) {
-			noStroke();
+		else if (this.color == 'yellow') {
+			fill(255,255,102);
+		}
+		else if (this.color == 'red') {
 			fill(255, 0, 0);
-			ellipse(this.x + this.size / 2, this.y + this.size / 2, this.size / 2, this.size / 2);
 		}
+		strokeWeight(2);
+		stroke(0);
+		rect(this.x, this.y, this.xsize, this.ysize);
 
-		// Draw the rest of the things
-		if (this.revealed) {
-			// Draw the content
-			if (this.mine) {
-				// Draw an ellipse simulating the mine
-				noStroke();
-				fill(0);
-				ellipse(this.x + this.size / 2, this.y + this.size / 2, this.size / 2, this.size / 2);
-			}
-			else if (this.number != 0) {
-				// Draw the number
-				noStroke();
-				fill(0);
-				textAlign(CENTER);
-				text(this.number, this.x + this.size / 2, this.y + this.size * (2/3));
-			}
-		}
+		// Display the text of the button
+		noStroke();
+		fill(0);
+		textAlign(CENTER);
+		textSize(16);
+		text(this.text, this.x + this.xsize / 2, this.y + this.ysize * (2/3));
+	}
+
+	changeText(string) {
+		// Receives a string and changes the text
+		this.text = string;
+	}
+
+	changeColor(string) {
+		// Receives a string and changes the color
+		this.color = string;
 	}
 
 	isClicked(mx, my) {
-		// Receives the mouse location and decides if the square has been clicked
-		let xClicked = (this.x <= mx && mx < this.x + this.size);
-		let yClicked = (this.y <= my && my < this.y + this.size);
+		// Decides if this button has been clicked
+		let xClicked = this.x < mx && mx <= this.x + this.xsize;
+		let yClicked = this.y < my && my <= this.y + this.ysize;
 		return xClicked && yClicked;
 	}
 
-	whenClicked(mouseButton) {
-		// The square has been clicked, so do something
-		if (this.mine) {
-			// End the game
-			master.endGame();
+	clicked() {
+		// The button has been clicked
+		if (this.type == 'new') {
+			master.restart();
 		}
-		else if (this.number != 0) {
-			// Reveal the square
-			this.revealed = true;
+		else if (this.type == 'mode1') {
+			master.changeMode('mode1');
+			master.restart();
 		}
-		else if (this.number == 0) {
-			// Call flood recursively
-			arena.flood(this);
+		else if (this.type == 'mode2') {
+			master.changeMode('mode2');
+			master.restart();
+		}
+		else if (this.type == 'mode3') {
+			master.changeMode('mode3');
+			master.restart();
 		}
 	}
 }
 
-/*
-class ButtonSelectMode {
-	// A button for selecting the mode of game
-}*/
+class Board {
+	// This class has information about the buttons on top
+	constructor(types) {
+		this.buttons = [];
+		for (let i = 0; i < types.length; i++) {
+			let newButton = new Button(types[i]);
+			this.buttons.push(newButton);
+		}
+	}
+
+	display() {
+		// Display all the message board
+		for (let i = 0, n = this.buttons.length; i < n; i++) {
+			this.buttons[i].draw();
+		}
+	}
+
+	isClicked(mx, my) {
+		// Receives the mouse location and decides if the board has been clicked
+		let xClicked = 0 < mx && mx <= width;
+		let yClicked = 0 < my && my <= 100;
+		return xClicked && yClicked;
+	}
+
+	buttonClicked(mx, my) {
+		// Decides which of the buttons has been clicked
+		for (let i = 0, n = this.buttons.length; i < n; i++) {
+			if (this.buttons[i].isClicked(mx, my)) {
+				return this.buttons[i];
+			}
+		}
+	}
+}

@@ -123,7 +123,6 @@ class Arena {
 		// Flood the surroundings of the given square, which we know does not
 		// have neighbors
 		square.revealed = true;
-    this.revealedNum++;
 
 		for (let i = -1; i < 2; i++) {
 			for (let j = -1; j < 2; j++) {
@@ -142,10 +141,22 @@ class Arena {
           else if (neighbor.number != 0 && !neighbor.revealed) {
             // Just reveal it and update the number of revealed squares
             neighbor.revealed = true;
-            this.revealedNum++;
           }
 				}
 			}
 		}
+	}
+
+	updateRevealed() {
+		// Count the number of squares that have been revealed
+		let number = 0;
+		for (let i = 0; i < this.xnum; i++) {
+			for (let j = 0; j < this.ynum; j++) {
+				if (this.squares[i][j].revealed) {
+					number++;
+				}
+			}
+		}
+		this.revealedNum = number;
 	}
 }

@@ -107,7 +107,6 @@ class Square {
 		else if (this.number != 0) {
 			// Reveal the square
 			this.revealed = true;
-      arena.revealedNum++;
 		}
 		else if (this.number == 0) {
 			// Call flood recursively

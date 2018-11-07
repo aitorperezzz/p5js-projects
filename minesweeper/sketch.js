@@ -29,6 +29,7 @@ function mousePressed() {
 		// If it hits the arena, decide which square and call
 		let square = arena.squareClicked(mouseX, mouseY);
 		square.clicked();
+		arena.updateRevealed();
 	}
 
 	else if (board.isClicked(mouseX, mouseY)) {
@@ -187,6 +188,7 @@ class Button {
 		fill(0);
 		textAlign(CENTER);
 		textSize(16);
+		textStyle(BOLD);
 		text(this.text, this.x + this.xsize / 2, this.y + this.ysize * (2/3));
 	}
 

@@ -17,7 +17,7 @@ function draw() {
 	background(200);
 
 	master.update();
-	arena.display();
+	master.display();
 }
 
 function keyPressed() {
@@ -27,11 +27,15 @@ function keyPressed() {
 	else if (keyCode === LEFT_ARROW) {
 		arena.piece.move('left');
 	}
+	else if (keyCode === UP_ARROW) {
+		arena.piece.rotate();
+	}
 }
 
 class Master {
 	// This class controls the game
 	constructor() {
+		this.lost = false;
 		//this.playing = true;
 		//this.score = 0;
 
@@ -42,9 +46,16 @@ class Master {
 
 	update() {
 		// Updates the elements
-		if (this.waitedEnough()) {
-			arena.update();
+		if (!this.lost) {
+			if (this.waitedEnough()) {
+				arena.update();
+			}
 		}
+	}
+
+	display() {
+		// Calls display on all the elements
+		arena.display();
 	}
 
 	waitedEnough() {
@@ -55,6 +66,12 @@ class Master {
 			return true;
 		}
 		return false;
+	}
+
+	endGame() {
+		// Stop updating and end the game
+		this.lost = true;
+		console.log('The player has lost');
 	}
 
 }

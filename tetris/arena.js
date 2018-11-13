@@ -1,6 +1,4 @@
 class Arena {
-	// The arena consists of a grid of available positions and a piece that is
-	// falling, and some pieces accumulated at the bottom
 	constructor() {
 		this.size = gridSize;
 		this.xnum = 10;
@@ -20,41 +18,45 @@ class Arena {
 
 	update() {
 		if (!this.pieceFalling) {
-			// If there's no piece, create a new one
+			// If there's no piece falling, create a new one
+			console.log('calling new piece');
 			this.piece = new Piece('T');
 			this.pieceFalling = true;
+			this.canMoveDown = true;
+			this.lastMovement = new Date();
 		}
 		else {
-			this.checkEnd();
 			this.piece.move('down');
+			//this.checkEnd();
 		}
 		this.piece.maintain();
-		//checkEnd();
+		if (!this.piece.canMoveDown && this.lastMovement > master.waitFor) {
+			this.piece.leaveThere();
+		}
+
+		// Lastly check if there is a piece of the bottom that occupies the top
+		// row, and in that case end the game
+		for (let k = 0, n = this.bottom.length; k < n; k++) {
+			if (this.bottom[k].j == this.ynum - 1) {
+				master.endGame();
+			}
+		}
 	}
 
+	/*
 	checkEnd() {
-		// Checks if the piece has arrived to an end (it can reach the floor of
-		// the canvas, or collide with another piece at the bottom )
-		if (this.piece.reachedFloor() || this.piece.collidedBottom()) {
-			// Leave it where it is by adding it to the bottoms
-			console.log('getting here');
+		// Checks if the piece has arrived to an end (it happens when the piece
+		// reaches the floor of the canvas, or touches a piece at the bottom)
+		if (this.piece.reachedFloor()) {
+			// Leave it where it is by adding it to the bottom array
 			this.leaveThere();
 		}
-	}
+	} */
 
 
-	leaveThere() {
-		// Leaves the current piece where it is, and sets the stage for creating
-		// a new one
-		for (let k = 0; k < 4; k++) {
-			this.bottom.push(this.piece.squares[k]);
-			console.log(this.bottom.length);
-		}
-		this.piece = new Piece('T');
-	}
 
 	display() {
-		fill(155);
+		fill(0);
 		rect(this.xstart, this.ystart, this.xsize, this.ysize);
 		if (this.pieceFalling) {
 			this.piece.display();

@@ -1,20 +1,54 @@
 class Piece {
-	// A piece is a block of four pieces
+	// A piece is a block of four squares
 	constructor(label) {
 		// Receives the type of piece in a string and creates the piece in the
 		// default position
 		this.label = label;
-		// TODO: MAKE ALL THE POSSIBLE SHAPES
-		let center = new Square(arena.xnum / 2, arena.ynum - 2, 0, 0);
-		let piece2 = new Square(center.i - 1, center.j, -1, 0);
-		let piece3 = new Square(center.i, center.j + 1, 0, 1);
-		let piece4 = new Square(center.i + 1, center.j, 1, 0);
-		this.squares = [center, piece2, piece3, piece4];
+		let center = new Square(1, arena.xnum / 2, 0, 0);
+		let piece1;
+		let piece2;
+		let piece3;
 
-		// The maximum and minimum i of all the squares in the piece. Useful for
-		// not leaving the arena on the right and left edges
-		this.iMax = 0;
-		this.iMin = arena.xnum - 1;
+		if (this.label == 'T') {
+			piece1 = new Square(center.i, center.j - 1, 0, -1);
+			piece2 = new Square(center.i + 1, center.j, 1, 0);
+			piece3 = new Square(center.i, center.j + 1, 0, 1);
+		}
+		else if (this.label == 'leftL') {
+			piece1 = new Square(center.i, center.j - 1, 0, -1);
+			piece2 = new Square(center.i + 1, center.j - 1, 1, -1);
+			piece3 = new Square(center.i, center.j + 1, 0, 1);
+		}
+		else if (this.label == 'rightL') {
+			piece1 = new Square(center.i, center.j - 1, 0, -1);
+			piece2 = new Square(center.i, center.j + 1, 0, 1);
+			piece3 = new Square(center.i + 1, center.j + 1, 1, 1);
+		}
+		else if (this.label == 'rightS') {
+			piece1 = new Square(center.i + 1, center.j - 1, 1, -1);
+			piece2 = new Square(center.i + 1, center.j, 1, 0);
+			piece3 = new Square(center.i, center.j + 1, 0, 1);
+		}
+		else if (this.label == 'leftS') {
+			piece1 = new Square(center.i, center.j - 1, 0, -1);
+			piece2 = new Square(center.i + 1, center.j, 1, 0);
+			piece3 = new Square(center.i + 1, center.j + 1, 1, 1);
+		}
+		else if (this.label == 'Q') {
+			piece1 = new Square(center.i + 1, center.j, 1, 0);
+			piece2 = new Square(center.i, center.j + 1, 0, 1);
+			piece3 = new Square(center.i + 1, center.j + 1, 1, 1);
+		}
+		else if (this.label == 'I') {
+			piece1 = new Square(center.i, center.j - 2, 0, -2);
+			piece2 = new Square(center.i, center.j - 1, 0, -1);
+			piece3 = new Square(center.i, center.j + 1, 0, 1);
+		}
+
+		this.squares = [center, piece1, piece2, piece3];
+		for (let i = 0; i < 4; i++) {
+			this.squares[i].show = true;
+		}
 
 		// Variable to know if the piece can fall doen still. If it cannot, and there
 		// has been no movement recently, then the piece can be left at the bottom
@@ -41,64 +75,50 @@ class Piece {
 		else if (here == 'down' && this.downConditions()) {
 			return true;
 		}
-		else {
-			return false;
-		}
+		return false;
 	}
 
 	rightConditions() {
-		// The piece can move right if it is not touching the right edge of the canvas and
-		// there's no piece to the right
-		let touchingEdge = this.iMax == arena.xnum - 1;
-		let pieceRight = false;
-		for (let k = 0, n = arena.bottom.length; k < n; k++) {
-			for (let l = 0; l < 4; l++) {
-				if (this.squares[l].i + 1 == arena.bottom[k].i && this.squares[l].j == arena.bottom[k].j) {
-					pieceRight = true;
-					break;
-				}
-			}
-		}
-		return !touchingEdge && !pieceRight;
-	}
-
-	leftConditions() {
-		// The piece can move left if it is not touching the left edge of the canvas and
-		// there's no piece to the left
-		let touchingEdge = this.iMin == 0;
-		let pieceLeft = false;
-		for (let k = 0, n = arena.bottom.length; k < n; k++) {
-			for (let l = 0; l < 4; l++) {
-				if (this.squares[l].i - 1 == arena.bottom[k].i && this.squares[l].j == arena.bottom[k].j) {
-					pieceLeft = true;
-					break;
-				}
-			}
-		}
-		return !touchingEdge && !pieceLeft;
-	}
-
-	downConditions() {
-		// The piece can move down if it has no piece below and also is not
-		// touching the floor
-		console.log(this.canMoveDown);
-		// First check if it is going to hit the floor
 		for (let k = 0; k < 4; k++) {
-			if (this.squares[k].j == 0) {
-				this.leaveThere();
+			// If it is next to the right edge of the canvas, it cannot move right
+			if (this.squares[k].j == arena.xnum - 1) {
+				return false;
+			}
+			// If there's a square to its right, it cannot move right (also, the indeices
+			// to be checked are accesible per the last condition)
+			if (arena.grid[this.squares[k].i][this.squares[k].j + 1].show) {
 				return false;
 			}
 		}
+		return true;
+	}
 
-		// Now check if it will hit the squares at the bottom
+	leftConditions() {
 		for (let k = 0; k < 4; k++) {
-			for (let l = 0, n = arena.bottom.length; l < n; l++) {
-				if (arena.bottom[l].i == this.squares[k].i && arena.bottom[l].j + 1 == this.squares[k].j) {
-					// In this case, the piece cannot continue falling down
-					this.canMoveDown = false;
-					this.lastMovement = new Date();
-					return false;
-				}
+			// If it is next to the left edge of the canvas, it cannot move left
+			if (this.squares[k].j == 0) {
+				return false;
+			}
+			// If there's a square to its left, it cannot move left
+			if (arena.grid[this.squares[k].i][this.squares[k].j - 1].show) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	downConditions() {
+		for (let k = 0; k < 4; k++) {
+			// Check if the square has reached the floor
+			if (this.squares[k].i == arena.ynum - 1) {
+				this.leaveThere();
+				return false;
+			}
+			// Check if the square has a piece below it
+			if (arena.grid[this.squares[k].i + 1][this.squares[k].j].show) {
+				this.canMoveDown = false;
+				this.lastMovement = new Date();
+				return false;
 			}
 		}
 		return true;
@@ -108,7 +128,7 @@ class Piece {
 		// Leaves the current piece where it is, and sets the stage for creating
 		// a new one
 		for (let k = 0; k < 4; k++) {
-			arena.bottom.push(this.squares[k]);
+			arena.grid[this.squares[k].i][this.squares[k].j].show = true;
 		}
 		arena.pieceFalling = false;
 	}
@@ -120,21 +140,9 @@ class Piece {
 	}
 
 	maintain() {
-		// Update some values after the piece has been moved
-		let imax = 0;
-		let imin = arena.xnum - 1;
-		for (let k = 0; k < 4; k++) {
-			if (this.squares[k].i < imin) {
-				imin = this.squares[k].i;
-			}
-			if (this.squares[k].i > imax) {
-				imax = this.squares[k].i;
-			}
-			// Maintain the squares themselves
-			this.squares[k].maintain(this.squares[0]);
+		for (let i = 0; i < 4; i++) {
+			this.squares[i].maintain(this.squares[0]);
 		}
-		this.iMin = imin;
-		this.iMax = imax;
 	}
 
 	display() {
@@ -143,17 +151,7 @@ class Piece {
 		}
 	}
 
-	reachedFloor() {
-		// Decides if the piece has reached the floor (so it should not be
-		// able to move in the next iteration)
-		for (let k = 0; k < 4; k++) {
-			if (this.squares[k].j == arena.ynum - 1) {
-				return true;
-			}
-		}
-		return false;
-	}
-
+	/*
 	collidedBottom() {
 		// Decides if it has collided with the squares in the bottom of the arena
 		for (let k = 0; k < 4; k++) {
@@ -166,16 +164,32 @@ class Piece {
 			}
 		}
 		return false;
-	}
+	} */
 
 	rotate() {
-		// Rotate the piece 90 degrees to the right
-		for (let k = 0; k < 4; k++) {
+		// Simulate the rotation and if it is allowed, proceed to make it happen
+		// This always rotates the piece 90 degrees to the right
+		if (this.label == 'Q') {
+			// The square is not allowed to rotate
+			return;
+		}
+		let center = this.squares[0];
+		let simulation = [new Square(center.i, center.j, 0, 0)];
+		for (let k = 1; k < 4; k++) {
 			let oldi = this.squares[k].iRelative;
 			let oldj = this.squares[k].jRelative;
-			this.squares[k].iRelative = oldj;
-			this.squares[k].jRelative = -oldi;
-			this.maintain();
+			let newSquare = new Square(center.i + oldj, center.j - oldi, oldj, -oldi);
+			if (newSquare.notAllowed()) {
+				return;
+			}
+			simulation.push(newSquare);
+		}
+
+		// If it reached here, the rotation is allowed, so push the changes to
+		// the piece
+		for (let i = 1; i < 4; i++) {
+			this.squares[i] = simulation[i];
+			this.squares[i].show = true;
 		}
 	}
 }

@@ -10,24 +10,32 @@ class Arena {
 
 		this.piece;
 		this.pieceFalling = false;
+		this.grid;
+	}
 
-		// The variable bottom will be the accumulation of squares on the bottom
-		// of the arena. They lose the property of being a Piece object
-		this.bottom = [];
+	createGrid() {
+		// Populates the grid of the arena with empty squares
+		this.grid = [];
+		for (let i = 0; i < this.ynum; i++) {
+			this.grid.push([]);
+			for (let j = 0; j < this.xnum; j++) {
+				let newSquare = new Square(i, j, 0, 0);
+				this.grid[i].push(newSquare);
+			}
+		}
 	}
 
 	update() {
 		if (!this.pieceFalling) {
 			// If there's no piece falling, create a new one
-			console.log('calling new piece');
-			this.piece = new Piece('T');
+			let randomIndex = Math.floor(Math.random() * letters.length);
+			this.piece = new Piece(letters[randomIndex]);
 			this.pieceFalling = true;
 			this.canMoveDown = true;
 			this.lastMovement = new Date();
 		}
 		else {
 			this.piece.move('down');
-			//this.checkEnd();
 		}
 		this.piece.maintain();
 		if (!this.piece.canMoveDown && this.lastMovement > master.waitFor) {
@@ -36,24 +44,37 @@ class Arena {
 
 		// Lastly check if there is a piece of the bottom that occupies the top
 		// row, and in that case end the game
-		for (let k = 0, n = this.bottom.length; k < n; k++) {
-			if (this.bottom[k].j == this.ynum - 1) {
+		for (let j = 0; j < this.xnum; j++) {
+			if (this.grid[1][j].show) {
 				master.endGame();
+			}
+		}
+
+		// Check if a row has to be deleted
+		for (let i = 1; i < arena.ynum; i++) {
+			let rowCount = 0;
+			for (let j = 0; j < arena.xnum; j++) {
+				if (this.grid[i][j].show) {
+					rowCount++;
+				}
+			}
+			if (rowCount == 10) {
+				// Delete the row
+				console.log('deleting row', i);
+				this.deleteRow(i);
 			}
 		}
 	}
 
-	/*
-	checkEnd() {
-		// Checks if the piece has arrived to an end (it happens when the piece
-		// reaches the floor of the canvas, or touches a piece at the bottom)
-		if (this.piece.reachedFloor()) {
-			// Leave it where it is by adding it to the bottom array
-			this.leaveThere();
+	deleteRow(index) {
+		// Receives an index and deletes that row, moving the upper part of
+		// the arena down on step
+		for (let i = index; i > 0; i--) {
+			for (let j = 0; j < this.xnum; j++) {
+				this.grid[i][j].show = this.grid[i - 1][j].show;
+			}
 		}
-	} */
-
-
+	}
 
 	display() {
 		fill(0);
@@ -61,8 +82,10 @@ class Arena {
 		if (this.pieceFalling) {
 			this.piece.display();
 		}
-		for (let i = 0, n = this.bottom.length; i < n; i++) {
-			this.bottom[i].draw();
+		for (let i = 0; i < this.ynum; i++) {
+			for (let j = 0; j < this.xnum; j++) {
+				this.grid[i][j].draw();
+			}
 		}
 	}
 }

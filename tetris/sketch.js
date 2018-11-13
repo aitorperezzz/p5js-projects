@@ -1,5 +1,6 @@
 // This is the size in pixels of a single square
 let gridSize = 30;
+let letters = ['T', 'leftL', 'rightL', 'leftS', 'rightS', 'Q', 'I'];
 
 let master;
 let board;
@@ -11,6 +12,7 @@ function setup() {
 
 	master = new Master();
 	arena = new Arena();
+	arena.createGrid();
 }
 
 function draw() {
@@ -30,21 +32,36 @@ function keyPressed() {
 	else if (keyCode === UP_ARROW) {
 		arena.piece.rotate();
 	}
+	else if (keyCode === DOWN_ARROW) {
+		master.downKeyPressed = true;
+	}
+}
+
+function keyReleased() {
+	if (keyCode === DOWN_ARROW) {
+		master.downKeyPressed = false;
+		master.start = new Date();
+	}
 }
 
 class Master {
 	// This class controls the game
 	constructor() {
 		this.lost = false;
-		//this.playing = true;
-		//this.score = 0;
+		this.score = 0;
 
-		// Variables that set the framerate, depends on the level
+		// Variables that set the framerate, the waiting time should depend on
+		// the level
 		this.start = new Date();
-		this.waitFor = 250;
+		this.waitFor = 400;
+
+		this.downKeyPressed = false;
 	}
 
 	update() {
+		if (this.downKeyPressed) {
+			arena.piece.move('down');
+		}
 		// Updates the elements
 		if (!this.lost) {
 			if (this.waitedEnough()) {
@@ -59,7 +76,7 @@ class Master {
 	}
 
 	waitedEnough() {
-		// Checks if the game has waited enough time to update
+		// Checks if the game has waited enough time to update the arena
 		let now = new Date();
 		if ((now - this.start) > this.waitFor) {
 			this.start =  new Date();
@@ -73,9 +90,4 @@ class Master {
 		this.lost = true;
 		console.log('The player has lost');
 	}
-
-}
-
-class Board {
-
 }

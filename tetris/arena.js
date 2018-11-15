@@ -8,9 +8,9 @@ class Arena {
 		this.xsize = this.xnum * this.size;
 		this.ysize = this.ynum * this.size;
 
-		this.piece;
-		this.pieceFalling = false;
+		// The arena has a grid and a piece
 		this.grid;
+		this.piece;
 	}
 
 	createGrid() {
@@ -25,45 +25,68 @@ class Arena {
 		}
 	}
 
+	createPiece() {
+		console.log('calling create piece');
+		// Creates a new piece
+		let randomIndex = Math.floor(Math.random() * letters.length);
+		this.piece = new Piece(letters[randomIndex]);
+	}
+
 	update() {
-		if (!this.pieceFalling) {
-			// If there's no piece falling, create a new one
-			let randomIndex = Math.floor(Math.random() * letters.length);
-			this.piece = new Piece(letters[randomIndex]);
-			this.pieceFalling = true;
-			this.canMoveDown = true;
-			this.lastMovement = new Date();
+		if (!this.piece.falling) {
+			this.createPiece();
 		}
 		else {
+			// Update the current one, by only checking if it can move down
 			this.piece.move('down');
 		}
-		this.piece.maintain();
-		if (!this.piece.canMoveDown && this.lastMovement > master.waitFor) {
-			this.piece.leaveThere();
-		}
 
-		// Lastly check if there is a piece of the bottom that occupies the top
-		// row, and in that case end the game
+		// Lastly, check for rows to be deleted or the end of the game
+		this.checkLose();
+		this.checkDelete();
+	}
+
+	checkLose() {
+		// Check if the player has lost by checking if there is a square in
+		// the upper row
 		for (let j = 0; j < this.xnum; j++) {
 			if (this.grid[1][j].show) {
 				master.endGame();
 			}
 		}
+	}
 
-		// Check if a row has to be deleted
+	checkDelete() {
+		// Check if a row has to be deleted. Count the number of deleted rows
+		let rowsDeleted = 0;
 		for (let i = 1; i < arena.ynum; i++) {
 			let rowCount = 0;
 			for (let j = 0; j < arena.xnum; j++) {
-				if (this.grid[i][j].show) {
+				if (this.grid[i][j].show == true) {
 					rowCount++;
 				}
 			}
 			if (rowCount == 10) {
 				// Delete the row
-				console.log('deleting row', i);
+				rowsDeleted++;
 				this.deleteRow(i);
 			}
 		}
+
+		// Assign score according to the number of rows deleted
+		if (rowsDeleted == 1) {
+			master.score = master.score + 40;
+		}
+		else if (rowsDeleted == 2) {
+			master.score = master.score + 100;
+		}
+		else if (rowsDeleted == 3) {
+			master.score = master.score + 300;
+		}
+		else if (rowsDeleted == 4) {
+			master.score = master.score + 1200;
+		}
+		console.log(master.score);
 	}
 
 	deleteRow(index) {
@@ -79,7 +102,7 @@ class Arena {
 	display() {
 		fill(0);
 		rect(this.xstart, this.ystart, this.xsize, this.ysize);
-		if (this.pieceFalling) {
+		if (this.piece.falling) {
 			this.piece.display();
 		}
 		for (let i = 0; i < this.ynum; i++) {

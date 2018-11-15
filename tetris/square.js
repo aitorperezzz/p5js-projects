@@ -44,6 +44,7 @@ class Square {
 	draw() {
 		if (this.show) {
 			fill(0, 255, 0);
+			stroke(0);
 			rect(this.x, this.y, this.size, this.size);
 		}
 	}

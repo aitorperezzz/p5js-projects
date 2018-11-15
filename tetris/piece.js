@@ -50,15 +50,12 @@ class Piece {
 			this.squares[i].show = true;
 		}
 
-		// Variable to know if the piece can fall doen still. If it cannot, and there
-		// has been no movement recently, then the piece can be left at the bottom
-		this.canMoveDown = true;
-		this.lastMovement = new Date();
+		this.falling = true;
 	}
 
 	move(here) {
 		if (this.canMove(here)) {
-			// Shift the whole piece and update the inner variables
+			// Shift the whole piece and update its information
 			this.shift(here);
 			this.maintain();
 		}
@@ -75,16 +72,20 @@ class Piece {
 		else if (here == 'down' && this.downConditions()) {
 			return true;
 		}
+		else if (here == 'down' && !this.downConditions()) {
+			this.leaveThere();
+		}
 		return false;
 	}
 
 	rightConditions() {
+		// Check if every square can physically move to the right
 		for (let k = 0; k < 4; k++) {
 			// If it is next to the right edge of the canvas, it cannot move right
 			if (this.squares[k].j == arena.xnum - 1) {
 				return false;
 			}
-			// If there's a square to its right, it cannot move right (also, the indeices
+			// If there's a square to its right, it cannot move right (also, the indices
 			// to be checked are accesible per the last condition)
 			if (arena.grid[this.squares[k].i][this.squares[k].j + 1].show) {
 				return false;
@@ -94,6 +95,7 @@ class Piece {
 	}
 
 	leftConditions() {
+		// Check if every square can physically move to the left
 		for (let k = 0; k < 4; k++) {
 			// If it is next to the left edge of the canvas, it cannot move left
 			if (this.squares[k].j == 0) {
@@ -108,16 +110,14 @@ class Piece {
 	}
 
 	downConditions() {
+		// Check if every square can physically move down
 		for (let k = 0; k < 4; k++) {
 			// Check if the square has reached the floor
 			if (this.squares[k].i == arena.ynum - 1) {
-				this.leaveThere();
 				return false;
 			}
 			// Check if the square has a piece below it
 			if (arena.grid[this.squares[k].i + 1][this.squares[k].j].show) {
-				this.canMoveDown = false;
-				this.lastMovement = new Date();
 				return false;
 			}
 		}
@@ -130,7 +130,7 @@ class Piece {
 		for (let k = 0; k < 4; k++) {
 			arena.grid[this.squares[k].i][this.squares[k].j].show = true;
 		}
-		arena.pieceFalling = false;
+		this.falling = false;
 	}
 
 	shift(here) {
@@ -150,21 +150,6 @@ class Piece {
 			this.squares[i].draw();
 		}
 	}
-
-	/*
-	collidedBottom() {
-		// Decides if it has collided with the squares in the bottom of the arena
-		for (let k = 0; k < 4; k++) {
-			for (let l = 0; l < arena.bottom.length; l++) {
-				let sameColumn = this.squares[k].i == arena.bottom[l].i;
-				let collide = this.squares[k].j + 1 == arena.bottom[l].j;
-				if (sameColumn && collide) {
-					return true;
-				}
-			}
-		}
-		return false;
-	} */
 
 	rotate() {
 		// Simulate the rotation and if it is allowed, proceed to make it happen
@@ -191,5 +176,6 @@ class Piece {
 			this.squares[i] = simulation[i];
 			this.squares[i].show = true;
 		}
+		this.maintain();
 	}
 }

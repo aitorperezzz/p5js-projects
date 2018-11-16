@@ -26,24 +26,13 @@ class Arena {
 	}
 
 	createPiece() {
-		console.log('calling create piece');
 		// Creates a new piece
 		let randomIndex = Math.floor(Math.random() * letters.length);
 		this.piece = new Piece(letters[randomIndex]);
 	}
 
 	update() {
-		if (!this.piece.falling) {
-			this.createPiece();
-		}
-		else {
-			// Update the current one, by only checking if it can move down
-			this.piece.move('down');
-		}
-
-		// Lastly, check for rows to be deleted or the end of the game
-		this.checkLose();
-		this.checkDelete();
+		this.piece.move('down');
 	}
 
 	checkLose() {
@@ -59,7 +48,7 @@ class Arena {
 	checkDelete() {
 		// Check if a row has to be deleted. Count the number of deleted rows
 		let rowsDeleted = 0;
-		for (let i = 1; i < arena.ynum; i++) {
+		for (let i = 1; i < this.ynum; i++) {
 			let rowCount = 0;
 			for (let j = 0; j < arena.xnum; j++) {
 				if (this.grid[i][j].show == true) {
@@ -67,26 +56,30 @@ class Arena {
 				}
 			}
 			if (rowCount == 10) {
-				// Delete the row
+				// Delete the current row
 				rowsDeleted++;
 				this.deleteRow(i);
 			}
 		}
 
 		// Assign score according to the number of rows deleted
-		if (rowsDeleted == 1) {
-			master.score = master.score + 40;
+		if (rowsDeleted > 0) {
+			if (rowsDeleted == 1) {
+				master.score = master.score + 40;
+			}
+			else if (rowsDeleted == 2) {
+				master.score = master.score + 100;
+			}
+			else if (rowsDeleted == 3) {
+				master.score = master.score + 300;
+			}
+			else if (rowsDeleted == 4) {
+				master.score = master.score + 1200;
+			}
+
+			// Only if any row has been deleted, update the board
+			board.update();
 		}
-		else if (rowsDeleted == 2) {
-			master.score = master.score + 100;
-		}
-		else if (rowsDeleted == 3) {
-			master.score = master.score + 300;
-		}
-		else if (rowsDeleted == 4) {
-			master.score = master.score + 1200;
-		}
-		console.log(master.score);
 	}
 
 	deleteRow(index) {
@@ -100,15 +93,19 @@ class Arena {
 	}
 
 	display() {
-		fill(0);
-		rect(this.xstart, this.ystart, this.xsize, this.ysize);
-		if (this.piece.falling) {
-			this.piece.display();
-		}
+		// Display the piece
+		this.piece.display();
+
+		// Diplay the grid
 		for (let i = 0; i < this.ynum; i++) {
 			for (let j = 0; j < this.xnum; j++) {
 				this.grid[i][j].draw();
 			}
 		}
+
+		// Display a white line around the arena
+		noFill();
+		stroke(255);
+		rect(this.xstart, this.ystart, this.xsize, this.ysize);
 	}
 }

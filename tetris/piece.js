@@ -49,8 +49,6 @@ class Piece {
 		for (let i = 0; i < 4; i++) {
 			this.squares[i].show = true;
 		}
-
-		this.falling = true;
 	}
 
 	move(here) {
@@ -74,6 +72,7 @@ class Piece {
 		}
 		else if (here == 'down' && !this.downConditions()) {
 			this.leaveThere();
+			return false;
 		}
 		return false;
 	}
@@ -125,12 +124,16 @@ class Piece {
 	}
 
 	leaveThere() {
-		// Leaves the current piece where it is, and sets the stage for creating
-		// a new one
+		// Leaves the current piece where it is, and creates a new one
 		for (let k = 0; k < 4; k++) {
 			arena.grid[this.squares[k].i][this.squares[k].j].show = true;
 		}
-		this.falling = false;
+		arena.createPiece();
+
+		// Only after a piece is added to the bottom part, check for the lose
+		// condition and for the deletion of some rows
+		arena.checkLose();
+		arena.checkDelete();
 	}
 
 	shift(here) {

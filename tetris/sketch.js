@@ -29,26 +29,29 @@ function draw() {
 }
 
 function keyPressed() {
-	if (keyCode === RIGHT_ARROW) {
-		arena.piece.move('right');
-	}
-	else if (keyCode === LEFT_ARROW) {
-		arena.piece.move('left');
-	}
-	else if (keyCode === DOWN_ARROW) {
-		master.downKeyPressed = true;
-	}
-	else if (keyCode === UP_ARROW) {
-		arena.piece.rotate();
-	}
-	else if (key === ' ') {
-		if (master.paused) {
-			master.paused = false;
-			board.changeMessage('Press SPACEBAR to pause');
+	if (!master.paused && !master.lost) {
+		if (keyCode === RIGHT_ARROW) {
+			arena.piece.move('right');
 		}
-		else {
+		else if (keyCode === LEFT_ARROW) {
+			arena.piece.move('left');
+		}
+		else if (keyCode === DOWN_ARROW) {
+			master.downKeyPressed = true;
+		}
+		else if (keyCode === UP_ARROW) {
+			arena.piece.rotate();
+		}
+		else if (key === ' ') {
+			// Then pause the game
 			master.paused = true;
 			board.changeMessage('Press SPACEBAR to continue');
+		}
+	}
+	else {
+		if (key === ' ' && !master.lost) {
+			master.paused = false;
+			board.changeMessage('Press SPACEBAR to pause');
 		}
 	}
 }
@@ -112,7 +115,8 @@ class Master {
 	endGame() {
 		// Display message and stop updating
 		this.lost = true;
-		board.changeMessage('Player has lost')
+		this.paused = true;
+		board.changeMessage('Player has lost');
 	}
 
 	newGame() {

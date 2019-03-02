@@ -1,28 +1,46 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>sudoku-solver</title>
+		<title>sudoku-solver</title>
 
-	<script src="libraries/p5.js"></script>
-	<script src="libraries/p5.dom.js"></script>
-	<script src="libraries/p5.sound.js"></script>
-	<script src="sketch.js"></script>
+		<script src="libraries/p5.js"></script>
+		<script src="libraries/p5.dom.js"></script>
+		<script src="libraries/p5.sound.js"></script>
+		<script src="sudoku.js"></script>
+		<script src="cell.js"></script>
+		<script src="sketch.js"></script>
 
-	<style>
-		body {
-			margin:0;
-			padding:0;
-			overflow: hidden;
-		}
-		canvas {
-			margin:auto;
-		}
-	</style>
-</head>
-<body>
-</body>
+		<style>
+			body {
+				margin: auto;
+				padding: 0;
+				overflow: hidden;
+			}
+			canvas {
+				margin: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>The Sudoku solver</h1>
+		<ul>
+ 			<li>Create custom sudoku:
+				<button onclick="startCustom()">Start custom Sudoku</button>
+				<button onclick="finishCustom()">Finish creating Sudoku</button>
+			</li>
+ 			<li>Load test sudoku
+				<select id="sudokuSelection">
+					<option value=1>Test 1</option>
+					<option value=2>Test 2</option>
+				</select>
+				<button onclick="loadTest()">Load test Sudoku</button>
+			</li>
+		</ul>
+		<button onclick="beginSolve()">SOLVE!</button>
+		<p></p>
+	</body>
 </html>
